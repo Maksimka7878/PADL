@@ -1,0 +1,202 @@
+"use client";
+
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { LevelBadge, LevelLabel } from "@/components/lobby/LevelBadge";
+import Link from "next/link";
+import { ArrowLeft, Save, MapPin, User as UserIcon } from "lucide-react";
+import { updateProfile } from "@/lib/actions";
+
+export default function ProfilePage() {
+  const { data: session } = useSession();
+  const [fullName, setFullName] = useState(session?.user?.name || "");
+  const [skillLevel, setSkillLevel] = useState(3.5);
+  const [preferredHand, setPreferredHand] = useState("Right");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateProfile({
+        full_name: fullName,
+        skill_level: skillLevel,
+        preferred_hand: preferredHand,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950 pb-20 lg:pb-8">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-800">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
+          <Link href="/dashboard">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="font-black text-lg">Профиль игрока</h1>
+            <p className="text-xs text-zinc-500">Настройте свой профиль</p>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        {/* Profile Card */}
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                {session?.user?.image ? (
+                  <img
+                    src={session.user.image}
+                    alt="Avatar"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <UserIcon className="h-10 w-10 text-emerald-500" />
+                )}
+              </div>
+              <div>
+                <CardTitle className="text-xl">{session?.user?.name || "Игрок"}</CardTitle>
+                <p className="text-sm text-zinc-500">{session?.user?.email}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <LevelBadge level={skillLevel} />
+                  <LevelLabel level={skillLevel} />
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Edit Form */}
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardHeader>
+            <CardTitle className="text-lg">Настройки профиля</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="text-zinc-400">
+                Полное имя
+              </Label>
+              <Input
+                id="fullName"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Иван Иванов"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <Label className="text-zinc-400">Уровень игры (NTRP)</Label>
+              <div className="flex gap-4 items-center">
+                <div className="w-16 text-center">
+                  <LevelBadge level={skillLevel} size="lg" />
+                </div>
+                <Slider
+                  min={1.0}
+                  max={7.0}
+                  step={0.5}
+                  value={[skillLevel]}
+                  onValueChange={(v) => setSkillLevel(v[0])}
+                  className="flex-1"
+                />
+              </div>
+              <div className="flex justify-between text-xs text-zinc-600">
+                <span>1.0 - Новичок</span>
+                <span>4.0 - Средний</span>
+                <span>7.0 - Про</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-zinc-400">Ведущая рука</Label>
+              <Select value={preferredHand} onValueChange={setPreferredHand}>
+                <SelectTrigger className="bg-zinc-950 border-zinc-800">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-950 border-zinc-800">
+                  <SelectItem value="Right">Правая</SelectItem>
+                  <SelectItem value="Left">Левая</SelectItem>
+                  <SelectItem value="Ambidextrous">Обе</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold"
+            >
+              {isSaving ? (
+                "Сохранение..."
+              ) : saved ? (
+                "Сохранено!"
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Сохранить изменения
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Stats Card */}
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardHeader>
+            <CardTitle className="text-lg">Статистика</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="bg-zinc-950 rounded-xl p-4">
+                <p className="text-2xl font-black text-emerald-400">0</p>
+                <p className="text-xs text-zinc-500 uppercase tracking-wider">Игр</p>
+              </div>
+              <div className="bg-zinc-950 rounded-xl p-4">
+                <p className="text-2xl font-black text-emerald-400">0</p>
+                <p className="text-xs text-zinc-500 uppercase tracking-wider">Побед</p>
+              </div>
+              <div className="bg-zinc-950 rounded-xl p-4">
+                <p className="text-2xl font-black text-emerald-400">-</p>
+                <p className="text-xs text-zinc-500 uppercase tracking-wider">Рейтинг</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-zinc-900/90 backdrop-blur-lg border-t border-zinc-800 lg:hidden">
+        <div className="flex items-center justify-around py-3">
+          <Link href="/dashboard" className="flex flex-col items-center gap-1 text-zinc-500">
+            <span className="text-xl">🎮</span>
+            <span className="text-[10px] uppercase tracking-wider">Лобби</span>
+          </Link>
+          <Link href="/courts" className="flex flex-col items-center gap-1 text-zinc-500">
+            <MapPin className="h-5 w-5" />
+            <span className="text-[10px] uppercase tracking-wider">Корты</span>
+          </Link>
+          <Link href="/profile" className="flex flex-col items-center gap-1 text-emerald-400">
+            <UserIcon className="h-5 w-5" />
+            <span className="text-[10px] uppercase tracking-wider">Профиль</span>
+          </Link>
+        </div>
+      </nav>
+    </div>
+  );
+}
