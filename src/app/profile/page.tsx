@@ -40,28 +40,28 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-20 lg:pb-8">
+    <div className="min-h-screen bg-[hsl(var(--background))] pb-20 lg:pb-8 noise">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-800">
+      <header className="sticky top-0 z-50 glass-strong">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
           <Link href="/dashboard">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="rounded-xl">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <div>
-            <h1 className="font-black text-lg">Профиль игрока</h1>
-            <p className="text-xs text-zinc-500">Настройте свой профиль</p>
+            <h1 className="font-display font-black text-lg">Профиль</h1>
+            <p className="text-[11px] text-white/30">Настройте свой профиль</p>
           </div>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         {/* Profile Card */}
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="glass gradient-border">
           <CardHeader>
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-lime/20 to-violet/20 rounded-full flex items-center justify-center ring-2 ring-white/[0.06]">
                 {session?.user?.image ? (
                   <Image
                     src={session.user.image}
@@ -71,12 +71,12 @@ export default function ProfilePage() {
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
-                  <UserIcon className="h-10 w-10 text-emerald-500" />
+                  <UserIcon className="h-10 w-10 text-lime" />
                 )}
               </div>
               <div>
-                <CardTitle className="text-xl">{session?.user?.name || "Игрок"}</CardTitle>
-                <p className="text-sm text-zinc-500">{session?.user?.email}</p>
+                <CardTitle className="font-display text-xl">{session?.user?.name || "Игрок"}</CardTitle>
+                <p className="text-sm text-white/30">{session?.user?.email}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <LevelBadge level={skillLevel} />
                   <LevelLabel level={skillLevel} />
@@ -87,13 +87,13 @@ export default function ProfilePage() {
         </Card>
 
         {/* Edit Form */}
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="glass gradient-border">
           <CardHeader>
-            <CardTitle className="text-lg">Настройки профиля</CardTitle>
+            <CardTitle className="font-display text-lg">Настройки профиля</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-zinc-400">
+              <Label htmlFor="fullName" className="text-white/40 text-xs tracking-wider">
                 Полное имя
               </Label>
               <Input
@@ -105,7 +105,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-4">
-              <Label className="text-zinc-400">Уровень игры (NTRP)</Label>
+              <Label className="text-white/40 text-xs tracking-wider">Уровень игры (NTRP)</Label>
               <div className="flex gap-4 items-center">
                 <div className="w-16 text-center">
                   <LevelBadge level={skillLevel} size="lg" />
@@ -119,7 +119,7 @@ export default function ProfilePage() {
                   className="flex-1"
                 />
               </div>
-              <div className="flex justify-between text-xs text-zinc-600">
+              <div className="flex justify-between text-[10px] text-white/20 uppercase tracking-[0.15em]">
                 <span>1.0 - Новичок</span>
                 <span>4.0 - Средний</span>
                 <span>7.0 - Про</span>
@@ -127,12 +127,12 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-zinc-400">Ведущая рука</Label>
+              <Label className="text-white/40 text-xs tracking-wider">Ведущая рука</Label>
               <Select value={preferredHand} onValueChange={setPreferredHand}>
-                <SelectTrigger className="bg-zinc-950 border-zinc-800">
+                <SelectTrigger className="bg-white/[0.04] border-white/10 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-950 border-zinc-800">
+                <SelectContent className="bg-surface-2 border-white/10 rounded-xl">
                   <SelectItem value="Right">Правая</SelectItem>
                   <SelectItem value="Left">Левая</SelectItem>
                   <SelectItem value="Ambidextrous">Обе</SelectItem>
@@ -143,7 +143,7 @@ export default function ProfilePage() {
             <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold"
+              className="w-full font-display font-bold h-12"
             >
               {isSaving ? (
                 "Сохранение..."
@@ -160,23 +160,23 @@ export default function ProfilePage() {
         </Card>
 
         {/* Stats Card */}
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="glass gradient-border">
           <CardHeader>
-            <CardTitle className="text-lg">Статистика</CardTitle>
+            <CardTitle className="font-display text-lg">Статистика</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="bg-zinc-950 rounded-xl p-4">
-                <p className="text-2xl font-black text-emerald-400">0</p>
-                <p className="text-xs text-zinc-500 uppercase tracking-wider">Игр</p>
+              <div className="bg-white/[0.03] rounded-2xl p-4 border border-white/[0.04]">
+                <p className="font-display text-2xl font-black text-lime">0</p>
+                <p className="text-[10px] text-white/25 uppercase tracking-[0.15em] mt-1">Игр</p>
               </div>
-              <div className="bg-zinc-950 rounded-xl p-4">
-                <p className="text-2xl font-black text-emerald-400">0</p>
-                <p className="text-xs text-zinc-500 uppercase tracking-wider">Побед</p>
+              <div className="bg-white/[0.03] rounded-2xl p-4 border border-white/[0.04]">
+                <p className="font-display text-2xl font-black text-violet">0</p>
+                <p className="text-[10px] text-white/25 uppercase tracking-[0.15em] mt-1">Побед</p>
               </div>
-              <div className="bg-zinc-950 rounded-xl p-4">
-                <p className="text-2xl font-black text-emerald-400">-</p>
-                <p className="text-xs text-zinc-500 uppercase tracking-wider">Рейтинг</p>
+              <div className="bg-white/[0.03] rounded-2xl p-4 border border-white/[0.04]">
+                <p className="font-display text-2xl font-black text-hot-pink">-</p>
+                <p className="text-[10px] text-white/25 uppercase tracking-[0.15em] mt-1">Рейтинг</p>
               </div>
             </div>
           </CardContent>
@@ -184,19 +184,19 @@ export default function ProfilePage() {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-zinc-900/90 backdrop-blur-lg border-t border-zinc-800 lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 glass-strong lg:hidden">
         <div className="flex items-center justify-around py-3">
-          <Link href="/dashboard" className="flex flex-col items-center gap-1 text-zinc-500">
+          <Link href="/dashboard" className="flex flex-col items-center gap-1 text-white/30">
             <span className="text-xl">🎮</span>
-            <span className="text-[10px] uppercase tracking-wider">Лобби</span>
+            <span className="text-[9px] font-display uppercase tracking-[0.15em] font-bold">Лобби</span>
           </Link>
-          <Link href="/courts" className="flex flex-col items-center gap-1 text-zinc-500">
+          <Link href="/courts" className="flex flex-col items-center gap-1 text-white/30">
             <MapPin className="h-5 w-5" />
-            <span className="text-[10px] uppercase tracking-wider">Корты</span>
+            <span className="text-[9px] font-display uppercase tracking-[0.15em] font-bold">Корты</span>
           </Link>
-          <Link href="/profile" className="flex flex-col items-center gap-1 text-emerald-400">
+          <Link href="/profile" className="flex flex-col items-center gap-1 text-lime">
             <UserIcon className="h-5 w-5" />
-            <span className="text-[10px] uppercase tracking-wider">Профиль</span>
+            <span className="text-[9px] font-display uppercase tracking-[0.15em] font-bold">Профиль</span>
           </Link>
         </div>
       </nav>

@@ -1,15 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Space_Grotesk, Unbounded } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { generateMetadata as generateSEO, generateOrganizationSchema } from "@/lib/seo";
 
-const inter = Inter({
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+  preload: true,
+  variable: "--font-body",
+});
+
+const unbounded = Unbounded({
   subsets: ["latin", "cyrillic"],
   display: "swap",
   preload: true,
+  variable: "--font-display",
 });
 
 export const metadata: Metadata = {
@@ -83,7 +91,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
       </head>
-      <body className={`${inter.className} antialiased bg-zinc-950 text-white min-h-screen`}>
+      <body className={`${spaceGrotesk.variable} ${unbounded.variable} font-sans antialiased bg-zinc-950 text-white min-h-screen`}>
         <Providers>
           {children}
         </Providers>

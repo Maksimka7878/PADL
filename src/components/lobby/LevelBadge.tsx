@@ -6,25 +6,25 @@ interface LevelBadgeProps {
 }
 
 function getLevelCategory(level: number) {
-  if (level <= 3.0) return { label: "Beginner", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" };
-  if (level <= 4.5) return { label: "Intermediate", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" };
-  if (level <= 6.0) return { label: "Advanced", color: "bg-orange-500/20 text-orange-400 border-orange-500/30" };
-  return { label: "Pro", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" };
+  if (level <= 3.0) return { label: "Beginner", color: "bg-cyan/15 text-cyan border-cyan/20" };
+  if (level <= 4.5) return { label: "Intermediate", color: "bg-lime/15 text-lime border-lime/20" };
+  if (level <= 6.0) return { label: "Advanced", color: "bg-violet/15 text-violet border-violet/20" };
+  return { label: "Pro", color: "bg-hot-pink/15 text-hot-pink border-hot-pink/20" };
 }
 
 export function LevelBadge({ level, size = "md" }: LevelBadgeProps) {
   const { color } = getLevelCategory(level);
 
   const sizeClasses = {
-    sm: "text-[10px] px-1.5 py-0.5",
-    md: "text-xs px-2 py-1",
+    sm: "text-[10px] px-2 py-0.5",
+    md: "text-xs px-2.5 py-1",
     lg: "text-sm px-3 py-1.5",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center rounded-md border font-bold tabular-nums",
+        "inline-flex items-center justify-center rounded-full border font-bold tabular-nums font-display",
         color,
         sizeClasses[size]
       )}
@@ -38,7 +38,7 @@ export function LevelLabel({ level }: { level: number }) {
   const { label, color } = getLevelCategory(level);
 
   return (
-    <span className={cn("text-xs font-medium", color.split(" ")[1])}>
+    <span className={cn("text-xs font-semibold", color.split(" ")[1])}>
       {label}
     </span>
   );

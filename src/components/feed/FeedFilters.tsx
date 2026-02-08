@@ -86,25 +86,25 @@ export function FeedFilters() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="relative border-zinc-700">
-          <Filter className="h-4 w-4 mr-2" />
-          Фильтры
+        <Button variant="outline" size="sm" className="relative rounded-xl border-white/10 bg-white/[0.04] hover:bg-white/[0.08]">
+          <Filter className="h-4 w-4 mr-2 text-violet" />
+          <span className="font-display text-xs">Фильтры</span>
           {activeFiltersCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 text-black text-xs rounded-full flex items-center justify-center font-bold">
+            <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-lime text-black text-[10px] rounded-full flex items-center justify-center font-display font-bold shadow-[0_0_10px_#BFFF0040]">
               {activeFiltersCount}
             </span>
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md bg-zinc-950 border-zinc-800">
+      <DialogContent className="max-w-md bg-surface border-white/[0.08] rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Фильтры</span>
+          <DialogTitle className="flex items-center justify-between font-display">
+            <span className="text-lg font-black">Фильтры</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleReset}
-              className="text-zinc-500 hover:text-white"
+              className="text-white/40 hover:text-white rounded-xl"
             >
               <RotateCcw className="h-4 w-4 mr-1" />
               Сбросить
@@ -115,10 +115,10 @@ export function FeedFilters() {
         <div className="space-y-6 py-4">
           {/* Level Range */}
           <div className="space-y-4">
-            <Label className="text-zinc-400">Уровень игроков</Label>
+            <Label className="text-white/40 text-xs tracking-wider uppercase">Уровень игроков</Label>
             <div className="flex items-center justify-center gap-4 py-2">
               <LevelBadge level={levelRange[0]} size="lg" />
-              <span className="text-zinc-600">—</span>
+              <span className="text-white/15 font-display">—</span>
               <LevelBadge level={levelRange[1]} size="lg" />
             </div>
             <Slider
@@ -128,7 +128,7 @@ export function FeedFilters() {
               value={levelRange}
               onValueChange={(v) => setLevelRange(v as [number, number])}
             />
-            <div className="flex justify-between text-xs text-zinc-600">
+            <div className="flex justify-between text-[10px] text-white/20 uppercase tracking-[0.15em]">
               <span>Новичок</span>
               <span>Про</span>
             </div>
@@ -136,16 +136,16 @@ export function FeedFilters() {
 
           {/* Metro Stations */}
           <div className="space-y-3">
-            <Label className="text-zinc-400">Станции метро</Label>
+            <Label className="text-white/40 text-xs tracking-wider uppercase">Станции метро</Label>
             <div className="flex flex-wrap gap-2">
               {METRO_STATIONS.map((metro) => (
                 <button
                   key={metro}
                   onClick={() => toggleMetro(metro)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-display font-medium transition-all duration-200 border ${
                     preferredMetros.includes(metro)
-                      ? "bg-emerald-500 text-black"
-                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                      ? "bg-lime/20 text-lime border-lime/30 shadow-[0_0_10px_#BFFF0020]"
+                      : "bg-white/[0.04] text-white/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-white/60"
                   }`}
                 >
                   {metro}
@@ -156,16 +156,16 @@ export function FeedFilters() {
 
           {/* Time Preferences */}
           <div className="space-y-3">
-            <Label className="text-zinc-400">Время игры</Label>
+            <Label className="text-white/40 text-xs tracking-wider uppercase">Время игры</Label>
             <div className="grid grid-cols-2 gap-2">
               {TIME_OPTIONS.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => toggleTime(option.value)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 py-2.5 rounded-xl text-xs font-display font-medium transition-all duration-200 border ${
                     preferredTimes.includes(option.value)
-                      ? "bg-emerald-500 text-black"
-                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                      ? "bg-violet/20 text-violet border-violet/30 shadow-[0_0_10px_#8B5CF620]"
+                      : "bg-white/[0.04] text-white/40 border-white/[0.06] hover:bg-white/[0.08] hover:text-white/60"
                   }`}
                 >
                   {option.label}
@@ -176,15 +176,15 @@ export function FeedFilters() {
 
           {/* Max Price */}
           <div className="space-y-3">
-            <Label className="text-zinc-400">Максимальная цена за игру</Label>
+            <Label className="text-white/40 text-xs tracking-wider uppercase">Максимальная цена за игру</Label>
             <Select
               value={maxPrice?.toString() || "any"}
               onValueChange={(v) => setMaxPrice(v === "any" ? null : parseInt(v))}
             >
-              <SelectTrigger className="bg-zinc-900 border-zinc-800">
+              <SelectTrigger className="bg-white/[0.04] border-white/10 rounded-xl">
                 <SelectValue placeholder="Любая" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-950 border-zinc-800">
+              <SelectContent className="bg-surface-2 border-white/10 rounded-xl">
                 <SelectItem value="any">Любая</SelectItem>
                 <SelectItem value="500">до 500 ₽</SelectItem>
                 <SelectItem value="800">до 800 ₽</SelectItem>
@@ -199,13 +199,13 @@ export function FeedFilters() {
         <div className="flex gap-3">
           <Button
             variant="outline"
-            className="flex-1 border-zinc-700"
+            className="flex-1 rounded-xl border-white/10"
             onClick={() => setIsOpen(false)}
           >
             Отмена
           </Button>
           <Button
-            className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-black font-bold"
+            className="flex-1 font-display font-bold rounded-xl"
             onClick={handleApply}
           >
             Применить
@@ -247,9 +247,9 @@ export function QuickFilters() {
       {/* Level filter chip */}
       {(filters.minLevel !== undefined || filters.maxLevel !== undefined) &&
         (filters.minLevel !== 1 || filters.maxLevel !== 7) && (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-800 rounded-full text-xs">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-lime/10 text-lime rounded-full text-xs font-display border border-lime/15">
             Уровень: {filters.minLevel || 1.0} - {filters.maxLevel || 7.0}
-            <button onClick={removeLevelFilter} className="hover:text-red-400">
+            <button onClick={removeLevelFilter} className="hover:text-hot-pink transition-colors">
               <X className="h-3 w-3" />
             </button>
           </span>
@@ -259,10 +259,10 @@ export function QuickFilters() {
       {filters.metro?.map((metro) => (
         <span
           key={metro}
-          className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-800 rounded-full text-xs"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-violet/10 text-violet rounded-full text-xs font-display border border-violet/15"
         >
           {metro}
-          <button onClick={() => removeMetroFilter(metro)} className="hover:text-red-400">
+          <button onClick={() => removeMetroFilter(metro)} className="hover:text-hot-pink transition-colors">
             <X className="h-3 w-3" />
           </button>
         </span>
@@ -270,9 +270,9 @@ export function QuickFilters() {
 
       {/* Price filter chip */}
       {filters.maxPrice !== undefined && (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-800 rounded-full text-xs">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-cyan/10 text-cyan rounded-full text-xs font-display border border-cyan/15">
           до {filters.maxPrice} ₽
-          <button onClick={removePriceFilter} className="hover:text-red-400">
+          <button onClick={removePriceFilter} className="hover:text-hot-pink transition-colors">
             <X className="h-3 w-3" />
           </button>
         </span>

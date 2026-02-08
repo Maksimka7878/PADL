@@ -38,26 +38,26 @@ export function LobbyCard({ lobby, userLevel = 0, onJoin, disabled }: LobbyCardP
   };
 
   return (
-    <Card className="overflow-hidden border-2 bg-zinc-950 text-white shadow-xl shadow-emerald-900/10 hover:border-zinc-700 transition-colors">
-      <CardHeader className="pb-2">
+    <Card className="group overflow-hidden border-white/[0.06] bg-surface hover:border-lime/20 transition-all duration-500 hover:shadow-[0_0_40px_#BFFF0008]">
+      <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <h3 className="font-bold text-lg text-emerald-400">{lobby.court_name}</h3>
-            <div className="flex items-center text-xs text-zinc-400">
-              <MapPin className="mr-1 h-3 w-3" /> {lobby.metro}
+          <div className="space-y-1.5">
+            <h3 className="font-display font-bold text-lg text-white group-hover:text-lime transition-colors duration-300">{lobby.court_name}</h3>
+            <div className="flex items-center text-xs text-white/35">
+              <MapPin className="mr-1.5 h-3 w-3 text-violet" /> {lobby.metro}
             </div>
           </div>
-          <div className="flex gap-1 items-center bg-zinc-900 p-1.5 rounded-lg border border-zinc-800">
+          <div className="flex gap-1.5 items-center bg-white/[0.04] p-1.5 rounded-xl border border-white/[0.06]">
             <LevelBadge level={lobby.min_level} size="sm" />
-            <span className="text-zinc-600 px-0.5 text-xs">/</span>
+            <span className="text-white/15 px-0.5 text-[10px]">/</span>
             <LevelBadge level={lobby.max_level} size="sm" />
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="py-2 space-y-4">
-        <div className="flex items-center text-sm font-medium">
-          <Calendar className="mr-2 h-4 w-4 text-emerald-500" />
+        <div className="flex items-center text-sm font-medium text-white/70">
+          <Calendar className="mr-2 h-4 w-4 text-hot-pink" />
           {new Date(lobby.start_time).toLocaleString("ru-RU", {
             weekday: "short",
             day: "numeric",
@@ -68,23 +68,23 @@ export function LobbyCard({ lobby, userLevel = 0, onJoin, disabled }: LobbyCardP
         </div>
 
         {lobby.description && (
-          <p className="text-xs text-zinc-500 line-clamp-2">{lobby.description}</p>
+          <p className="text-xs text-white/30 line-clamp-2">{lobby.description}</p>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <div className="flex justify-between text-[10px] items-center">
-            <span className="flex items-center gap-1 uppercase tracking-wider text-zinc-500">
-              <Users className="h-3 w-3" /> Слот: {lobby.participants_count}/{lobby.required_players}
+            <span className="flex items-center gap-1.5 uppercase tracking-[0.15em] text-white/30">
+              <Users className="h-3 w-3" /> Слоты: {lobby.participants_count}/{lobby.required_players}
             </span>
-            <span className="text-emerald-500 font-mono">{Math.round(fillPercentage)}%</span>
+            <span className="text-lime font-display font-bold text-xs">{Math.round(fillPercentage)}%</span>
           </div>
-          <Progress value={fillPercentage} className="h-1.5 bg-zinc-800" />
+          <Progress value={fillPercentage} className="h-1.5" />
         </div>
       </CardContent>
 
-      <CardFooter className="pt-2">
+      <CardFooter className="pt-3">
         <Button
-          className="w-full font-black uppercase tracking-widest text-xs h-10 transition-all duration-300"
+          className="w-full font-display font-black uppercase tracking-[0.15em] text-xs h-11 transition-all duration-300"
           variant={isFull ? "secondary" : isLevelCompatible ? "default" : "outline"}
           disabled={disabled || !isLevelCompatible || isFull}
           onClick={handleJoin}
@@ -92,8 +92,8 @@ export function LobbyCard({ lobby, userLevel = 0, onJoin, disabled }: LobbyCardP
           {isFull
             ? "Матч укомплектован"
             : isLevelCompatible
-            ? "ВСТУПИТЬ В ИГРУ"
-            : "УРОВЕНЬ НЕ ПОДХОДИТ"}
+            ? "Вступить в игру"
+            : "Уровень не подходит"}
         </Button>
       </CardFooter>
     </Card>

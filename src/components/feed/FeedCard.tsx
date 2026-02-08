@@ -7,17 +7,46 @@ import { Progress } from "@/components/ui/progress";
 import { LevelBadge } from "@/components/lobby/LevelBadge";
 import { useFeedStore } from "@/store/feed";
 import type { ScoredLobby } from "@/lib/feed-algorithm";
-import { MapPin, Calendar, Users, Heart, Sparkles, Clock, Wallet } from "lucide-react";
+import { MapPin, Calendar, Users, Heart, Sparkles, Clock, Wallet, Zap, Star, Compass } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 
 interface FeedCardProps {
   lobby: ScoredLobby;
   showMatchReasons?: boolean;
+  onJoin?: (id: string) => Promise<void>;
 }
 
-export function FeedCard({ lobby, showMatchReasons = true }: FeedCardProps) {
-  const { addFavorite, removeFavorite, isFavorite } = useFeedStore();
+const RECOMMENDATION_BADGES: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
+  personalized: {
+    label: "Для вас",
+    icon: <Sparkles className="h-2.5 w-2.5" />,
+    className: "bg-lime/20 text-lime border-lime/20",
+  },
+  popular: {
+    label: "Популярное",
+    icon: <Zap className="h-2.5 w-2.5" />,
+    className: "bg-hot-pink/20 text-hot-pink border-hot-pink/20",
+  },
+  serendipity: {
+    label: "Открытие",
+    icon: <Compass className="h-2.5 w-2.5" />,
+    className: "bg-cyan/20 text-cyan border-cyan/20",
+  },
+  friends: {
+    label: "Друзья",
+    icon: <Users className="h-2.5 w-2.5" />,
+    className: "bg-violet/20 text-violet border-violet/20",
+  },
+  new: {
+    label: "Новое",
+    icon: <Star className="h-2.5 w-2.5" />,
+    className: "bg-cyan/20 text-cyan border-cyan/20",
+  },
+};
+
+export function FeedCard({ lobby, showMatchReasons = true, onJoin }: FeedCardProps) {
+  const { addFavorite, removeFavorite, isFavorite, trackView, trackFavorite, trackUnfavorite } = useFeedStore();
   const favorite = isFavorite(lobby.id);
 
   const fillPercent = (lobby.participants_count / lobby.required_players) * 100;
@@ -29,8 +58,10 @@ export function FeedCard({ lobby, showMatchReasons = true }: FeedCardProps) {
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
-    // eslint-disable-next-line
     setNow(Date.now());
+    // Track view when card is rendered
+    trackView(lobby.court_name);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startTime = new Date(lobby.start_time);
@@ -44,10 +75,20 @@ export function FeedCard({ lobby, showMatchReasons = true }: FeedCardProps) {
     e.stopPropagation();
     if (favorite) {
       removeFavorite(lobby.id);
+      trackUnfavorite(lobby.court_name);
       toast("Удалено из избранного");
     } else {
       addFavorite(lobby.id);
-      toast.success("Добавлено в избранное");
+      trackFavorite(lobby.court_name);
+      toast.success("Добавлено в избранное ❤️");
+    }
+  };
+
+  const handleJoin = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onJoin) {
+      await onJoin(lobby.id);
     }
   };
 
@@ -61,25 +102,35 @@ export function FeedCard({ lobby, showMatchReasons = true }: FeedCardProps) {
     });
   };
 
+  const recBadge = RECOMMENDATION_BADGES[lobby.recommendationType];
+
   return (
     <Link href={`/dashboard/lobbies/${lobby.id}`}>
-      <Card className="overflow-hidden border-2 bg-zinc-950 shadow-xl shadow-emerald-900/10 hover:border-emerald-500/50 transition-all duration-300 group">
+      <Card className="group overflow-hidden border-white/[0.06] bg-surface hover:border-lime/20 transition-all duration-500 hover:shadow-[0_0_40px_#BFFF0008]">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-base truncate group-hover:text-emerald-400 transition-colors">
+                <h3 className="font-display font-bold text-base truncate group-hover:text-lime transition-colors duration-300">
                   {lobby.court_name}
                 </h3>
                 {lobby.score >= 85 && (
-                  <span className="shrink-0 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded uppercase">
+                  <span className="shrink-0 px-1.5 py-0.5 bg-lime/20 text-lime text-[10px] font-display font-bold rounded-full uppercase tracking-wider border border-lime/20">
                     TOP
                   </span>
                 )}
               </div>
-              <div className="flex items-center text-xs text-zinc-500 mt-1">
-                <MapPin className="h-3 w-3 mr-1 shrink-0" />
-                <span className="truncate">{lobby.metro}</span>
+              <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex items-center text-xs text-white/35">
+                  <MapPin className="h-3 w-3 mr-1 shrink-0 text-violet" />
+                  <span className="truncate">{lobby.metro}</span>
+                </div>
+                {recBadge && (
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-display font-bold rounded-full uppercase tracking-wider border ${recBadge.className}`}>
+                    {recBadge.icon}
+                    {recBadge.label}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -87,18 +138,18 @@ export function FeedCard({ lobby, showMatchReasons = true }: FeedCardProps) {
               {/* Favorite button */}
               <button
                 onClick={toggleFavorite}
-                className={`p-1.5 rounded-lg transition-colors ${favorite
-                  ? "bg-red-500/20 text-red-400"
-                  : "bg-zinc-800 text-zinc-500 hover:text-red-400"
+                className={`p-1.5 rounded-xl transition-all duration-300 ${favorite
+                  ? "bg-hot-pink/20 text-hot-pink shadow-[0_0_12px_#FF2D7B30]"
+                  : "bg-white/[0.04] text-white/25 hover:text-hot-pink hover:bg-hot-pink/10"
                   }`}
               >
                 <Heart className={`h-4 w-4 ${favorite ? "fill-current" : ""}`} />
               </button>
 
               {/* Level badges */}
-              <div className="flex gap-1 items-center bg-zinc-900 p-1.5 rounded-lg border border-zinc-800">
+              <div className="flex gap-1.5 items-center bg-white/[0.04] p-1.5 rounded-xl border border-white/[0.06]">
                 <LevelBadge level={lobby.min_level} size="sm" />
-                <span className="text-zinc-600 px-0.5 text-xs">/</span>
+                <span className="text-white/15 px-0.5 text-[10px]">/</span>
                 <LevelBadge level={lobby.max_level} size="sm" />
               </div>
             </div>
@@ -109,9 +160,9 @@ export function FeedCard({ lobby, showMatchReasons = true }: FeedCardProps) {
           {/* Date & Time */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-emerald-500" />
-              <span className="font-medium">{formatDate()}</span>
-              <span className="text-zinc-500">
+              <Calendar className="h-4 w-4 text-hot-pink" />
+              <span className="font-display font-medium">{formatDate()}</span>
+              <span className="text-white/35">
                 {startTime.toLocaleTimeString("ru-RU", {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -119,9 +170,9 @@ export function FeedCard({ lobby, showMatchReasons = true }: FeedCardProps) {
               </span>
             </div>
             {pricePerPerson && (
-              <div className="flex items-center gap-1 text-sm text-zinc-400">
-                <Wallet className="h-3.5 w-3.5" />
-                <span>~{pricePerPerson.toLocaleString()} ₽</span>
+              <div className="flex items-center gap-1 text-sm text-white/40">
+                <Wallet className="h-3.5 w-3.5 text-cyan" />
+                <span className="font-display">~{pricePerPerson.toLocaleString()} ₽</span>
               </div>
             )}
           </div>
@@ -132,7 +183,7 @@ export function FeedCard({ lobby, showMatchReasons = true }: FeedCardProps) {
               {lobby.matchReasons.slice(0, 3).map((reason, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-medium rounded-full"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-lime/10 text-lime text-[10px] font-medium rounded-full border border-lime/10"
                 >
                   <Sparkles className="h-2.5 w-2.5" />
                   {reason}
@@ -142,34 +193,31 @@ export function FeedCard({ lobby, showMatchReasons = true }: FeedCardProps) {
           )}
 
           {/* Fill progress */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-zinc-500 flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                Игроков
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-[10px]">
+              <span className="flex items-center gap-1.5 uppercase tracking-[0.15em] text-white/30">
+                <Users className="h-3 w-3" /> Слоты
               </span>
-              <span className="text-emerald-400 font-bold">
+              <span className="text-lime font-display font-bold text-xs">
                 {lobby.participants_count}/{lobby.required_players}
               </span>
             </div>
-            <Progress
-              value={fillPercent}
-              className="h-1.5 bg-zinc-800"
-            />
+            <Progress value={fillPercent} className="h-1.5" />
           </div>
         </CardContent>
 
         <CardFooter className="pt-2">
           <Button
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold group-hover:shadow-lg group-hover:shadow-emerald-500/25 transition-all"
+            className="w-full font-display font-black uppercase tracking-[0.15em] text-xs h-11 transition-all duration-300"
             disabled={spotsLeft === 0}
+            onClick={handleJoin}
           >
             {spotsLeft === 0 ? (
-              "Мест нет"
+              "Матч укомплектован"
             ) : (
               <>
                 Присоединиться
-                <span className="ml-2 px-1.5 py-0.5 bg-black/20 rounded text-xs">
+                <span className="ml-2 px-1.5 py-0.5 bg-black/20 rounded-full text-[10px] font-display">
                   {spotsLeft} {spotsLeft === 1 ? "место" : spotsLeft < 5 ? "места" : "мест"}
                 </span>
               </>
@@ -181,36 +229,57 @@ export function FeedCard({ lobby, showMatchReasons = true }: FeedCardProps) {
   );
 }
 
-// Horizontal card for "Starting Soon" section
+// ─── Compact horizontal card for "Starting Soon" section ───
 export function FeedCardCompact({ lobby }: { lobby: ScoredLobby }) {
   const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
-    // eslint-disable-next-line
     setNow(Date.now());
   }, []);
 
   const startTime = new Date(lobby.start_time);
-  const hoursUntil = now ? Math.round(
-    (startTime.getTime() - now) / (1000 * 60 * 60)
+  const minutesUntil = now ? Math.round(
+    (startTime.getTime() - now) / (1000 * 60)
   ) : null;
+
+  const formatTimeUntil = () => {
+    if (minutesUntil === null) return "";
+    if (minutesUntil <= 0) return "Сейчас!";
+    if (minutesUntil < 60) return `${minutesUntil} мин`;
+    return `${Math.round(minutesUntil / 60)}ч`;
+  };
+
+  const isUrgent = minutesUntil !== null && minutesUntil <= 60;
 
   return (
     <Link href={`/dashboard/lobbies/${lobby.id}`}>
-      <div className="flex items-center gap-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800 hover:border-emerald-500/50 transition-colors">
-        <div className="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center shrink-0">
-          <Clock className="h-6 w-6 text-emerald-500" />
+      <div className={`flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 hover:scale-[1.02] ${
+        isUrgent
+          ? "bg-hot-pink/5 border-hot-pink/20 hover:border-hot-pink/40 hover:shadow-[0_0_20px_#FF2D7B10]"
+          : "bg-white/[0.03] border-white/[0.06] hover:border-lime/20 hover:shadow-[0_0_20px_#BFFF0008]"
+      }`}>
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+          isUrgent
+            ? "bg-hot-pink/20 shadow-[0_0_15px_#FF2D7B20]"
+            : "bg-lime/10"
+        }`}>
+          <Clock className={`h-6 w-6 ${isUrgent ? "text-hot-pink animate-pulse" : "text-lime"}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm truncate">{lobby.court_name}</p>
-          <p className="text-xs text-zinc-500">{lobby.metro}</p>
+          <p className="font-display font-bold text-sm truncate">{lobby.court_name}</p>
+          <p className="text-xs text-white/30 flex items-center gap-1">
+            <MapPin className="h-3 w-3 text-violet" />
+            {lobby.metro}
+          </p>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-sm font-bold text-emerald-400">
-            {hoursUntil !== null && (hoursUntil <= 0 ? "Скоро" : `${hoursUntil}ч`)}
+          <p className={`text-sm font-display font-bold ${
+            isUrgent ? "text-hot-pink" : "text-lime"
+          }`}>
+            {formatTimeUntil()}
           </p>
-          <p className="text-xs text-zinc-500">
-            {lobby.participants_count}/{lobby.required_players}
+          <p className="text-[10px] text-white/25 font-display uppercase tracking-wider">
+            {lobby.participants_count}/{lobby.required_players} игрок.
           </p>
         </div>
       </div>

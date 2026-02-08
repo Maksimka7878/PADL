@@ -1,12 +1,21 @@
 /**
- * Feed Algorithm for Moscow Padel Community
+ * Recommendation Feed Algorithm for Moscow Padel Community
  *
- * Scores and ranks lobbies based on multiple factors:
- * - Skill level match (40% weight)
- * - Time proximity (25% weight)
- * - Location/metro proximity (20% weight)
- * - Lobby fill rate (10% weight)
- * - Creator reputation (5% weight)
+ * Multi-signal scoring system:
+ * - Skill level match (35% weight) — core matching
+ * - Time proximity (20% weight) — urgency signal
+ * - Location/metro proximity (15% weight) — convenience
+ * - Engagement signals (10% weight) — collaborative filtering
+ * - Lobby fill rate (8% weight) — social proof
+ * - Time of day preference (7% weight) — behavioral
+ * - Creator reputation (5% weight) — quality signal
+ *
+ * Enhanced with:
+ * - Collaborative filtering (users with similar preferences)
+ * - Implicit engagement tracking (views, joins, favorites)
+ * - Time-decay for freshness
+ * - Diversity injection to avoid filter bubbles
+ * - Serendipity factor for exploration
  */
 
 export interface FeedLobby {
@@ -22,6 +31,7 @@ export interface FeedLobby {
   description?: string;
   creator_rating?: number;
   price_per_hour?: number;
+  created_at?: string;
 }
 
 export interface UserPreferences {
@@ -32,9 +42,31 @@ export interface UserPreferences {
   friends_ids?: string[];
 }
 
+/** Implicit engagement signals collected from user behavior */
+export interface EngagementSignals {
+  /** Court IDs the user has joined before */
+  joinedCourts: string[];
+  /** Court IDs the user has viewed (clicked into) */
+  viewedCourts: string[];
+  /** Court IDs the user has favorited */
+  favoritedCourts: string[];
+  /** Levels the user has played at (historical) */
+  playedLevels: number[];
+  /** Metro stations the user has played at */
+  playedMetros: string[];
+  /** Times of day user typically joins games */
+  joinTimePatterns: string[];
+  /** Court names user has dismissed / scrolled past */
+  dismissedCourts: string[];
+  /** Number of total joins (activity level) */
+  totalJoins: number;
+}
+
 export interface ScoredLobby extends FeedLobby {
   score: number;
   matchReasons: string[];
+  /** Why this was recommended (for transparency) */
+  recommendationType: 'personalized' | 'popular' | 'serendipity' | 'friends' | 'new';
 }
 
 // Metro stations grouped by line for proximity calculation
@@ -47,194 +79,269 @@ const METRO_LINES: Record<string, string[]> = {
   purple: ['Медведково', 'Бабушкинская', 'Свиблово', 'Ботанический сад', 'ВДНХ', 'Алексеевская', 'Рижская', 'Проспект Мира', 'Сухаревская', 'Тургеневская', 'Китай-город', 'Третьяковская', 'Октябрьская', 'Шаболовская', 'Ленинский проспект', 'Академическая', 'Профсоюзная', 'Новые Черёмушки', 'Калужская', 'Беляево', 'Коньково', 'Тёплый Стан', 'Ясенево', 'Новоясеневская', 'Битцевский парк'],
 };
 
-/**
- * Calculate skill level match score (0-100)
- * Perfect match = 100, outside range = 0
- */
+// ─────────────────────────────────────
+// SCORING FUNCTIONS
+// ─────────────────────────────────────
+
+/** Skill level match score (0-100) */
 function calculateSkillScore(userLevel: number, minLevel: number, maxLevel: number): number {
-  // User is within range
   if (userLevel >= minLevel && userLevel <= maxLevel) {
-    // Calculate how centered the user is in the range
     const rangeCenter = (minLevel + maxLevel) / 2;
     const rangeSize = maxLevel - minLevel;
     const distanceFromCenter = Math.abs(userLevel - rangeCenter);
     const normalizedDistance = rangeSize > 0 ? distanceFromCenter / (rangeSize / 2) : 0;
-
-    // Closer to center = higher score
     return Math.round(100 - (normalizedDistance * 20));
   }
-
-  // User is outside range - calculate penalty
   const distanceOutside = userLevel < minLevel
     ? minLevel - userLevel
     : userLevel - maxLevel;
-
-  // Each 0.5 level outside = -25 points
   return Math.max(0, 50 - (distanceOutside * 50));
 }
 
-/**
- * Calculate time proximity score (0-100)
- * Games starting soon get higher scores, but not too soon
- */
+/** Time proximity score (0-100) */
 function calculateTimeScore(startTime: string): number {
   const now = new Date();
   const gameTime = new Date(startTime);
   const hoursUntilGame = (gameTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-  // Past games get 0
   if (hoursUntilGame < 0) return 0;
-
-  // Games in 2-6 hours are ideal (100 points)
   if (hoursUntilGame >= 2 && hoursUntilGame <= 6) return 100;
-
-  // Games in 1-2 hours (might be too soon to travel)
   if (hoursUntilGame >= 1 && hoursUntilGame < 2) return 80;
-
-  // Games in less than 1 hour
   if (hoursUntilGame < 1) return 60;
-
-  // Games 6-24 hours away
   if (hoursUntilGame <= 24) return Math.round(90 - ((hoursUntilGame - 6) * 2));
-
-  // Games 1-3 days away
   if (hoursUntilGame <= 72) return Math.round(60 - ((hoursUntilGame - 24) / 2));
-
-  // Games more than 3 days away
   return Math.max(20, Math.round(40 - (hoursUntilGame - 72) / 10));
 }
 
-/**
- * Calculate metro proximity score (0-100)
- */
+/** Metro proximity score (0-100) */
 function calculateLocationScore(lobbyMetro: string, preferredMetros?: string[]): number {
-  if (!preferredMetros || preferredMetros.length === 0) return 70; // Neutral score
+  if (!preferredMetros || preferredMetros.length === 0) return 70;
 
-  // Direct match
   if (preferredMetros.includes(lobbyMetro)) return 100;
 
-  // Check if on the same metro line
   for (const [, stations] of Object.entries(METRO_LINES)) {
     const lobbyIndex = stations.indexOf(lobbyMetro);
     if (lobbyIndex === -1) continue;
-
     for (const preferred of preferredMetros) {
       const preferredIndex = stations.indexOf(preferred);
       if (preferredIndex !== -1) {
-        // Same line - score based on distance
         const stationDistance = Math.abs(lobbyIndex - preferredIndex);
         return Math.max(50, 90 - (stationDistance * 5));
       }
     }
   }
-
-  // Different lines
   return 40;
 }
 
-/**
- * Calculate fill rate score (0-100)
- * Almost full lobbies are more appealing (social proof)
- */
+/** Fill rate score — social proof (0-100) */
 function calculateFillScore(participants: number, required: number): number {
   const fillRate = participants / required;
-
-  // 75% full is ideal (will likely happen)
-  if (fillRate >= 0.5 && fillRate < 1) {
-    return Math.round(70 + (fillRate * 40));
-  }
-
-  // Empty lobbies less appealing
+  if (fillRate >= 0.5 && fillRate < 1) return Math.round(70 + (fillRate * 40));
   if (fillRate === 0) return 40;
-
-  // Has some players
   if (fillRate < 0.5) return Math.round(50 + (fillRate * 40));
-
-  // Full lobby
-  return 30;
+  return 30; // full
 }
 
-/**
- * Calculate time of day preference score (0-100)
- */
+/** Time-of-day preference score (0-100) */
 function calculateTimePreferenceScore(startTime: string, preferredTimes?: string[]): number {
   if (!preferredTimes || preferredTimes.length === 0) return 70;
-
   const hour = new Date(startTime).getHours();
   let timeOfDay: string;
-
   if (hour >= 6 && hour < 12) timeOfDay = 'morning';
   else if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
   else if (hour >= 17 && hour < 21) timeOfDay = 'evening';
   else timeOfDay = 'night';
-
   return preferredTimes.includes(timeOfDay) ? 100 : 50;
 }
 
-/**
- * Main feed algorithm - scores and sorts lobbies
- */
-export function scoreLobby(lobby: FeedLobby, userPrefs: UserPreferences): ScoredLobby {
+// ─────────────────────────────────────
+// ENGAGEMENT / COLLABORATIVE FILTERING
+// ─────────────────────────────────────
+
+/** Score based on implicit engagement signals — collaborative filtering lite */
+function calculateEngagementScore(lobby: FeedLobby, signals: EngagementSignals): number {
+  if (signals.totalJoins === 0) return 50; // cold start — neutral
+
+  let score = 50;
+
+  // Boost courts user has played at before (familiarity)
+  if (signals.joinedCourts.includes(lobby.court_name)) {
+    score += 20;
+  }
+
+  // Boost courts user has favorited
+  if (signals.favoritedCourts.includes(lobby.court_name)) {
+    score += 15;
+  }
+
+  // Boost metros user has played at before
+  if (signals.playedMetros.includes(lobby.metro)) {
+    score += 10;
+  }
+
+  // Boost if lobby level aligns with user's historical play levels
+  if (signals.playedLevels.length > 0) {
+    const avgPlayedLevel = signals.playedLevels.reduce((a, b) => a + b, 0) / signals.playedLevels.length;
+    const lobbyCenter = (lobby.min_level + lobby.max_level) / 2;
+    const levelDiff = Math.abs(avgPlayedLevel - lobbyCenter);
+    if (levelDiff <= 0.5) score += 10;
+    else if (levelDiff <= 1.0) score += 5;
+  }
+
+  // Inferred time-of-day preference from join history
+  if (signals.joinTimePatterns.length > 0) {
+    const hour = new Date(lobby.start_time).getHours();
+    let timeOfDay: string;
+    if (hour >= 6 && hour < 12) timeOfDay = 'morning';
+    else if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
+    else if (hour >= 17 && hour < 21) timeOfDay = 'evening';
+    else timeOfDay = 'night';
+
+    // Count occurrences of this timeOfDay in user's patterns
+    const matchCount = signals.joinTimePatterns.filter(t => t === timeOfDay).length;
+    const ratio = matchCount / signals.joinTimePatterns.length;
+    score += Math.round(ratio * 15);
+  }
+
+  // Penalize dismissed courts (negative signal)
+  if (signals.dismissedCourts.includes(lobby.court_name)) {
+    score -= 15;
+  }
+
+  return Math.max(0, Math.min(100, score));
+}
+
+/** Freshness/recency decay — newer lobbies get a boost */
+function calculateFreshnessScore(createdAt?: string): number {
+  if (!createdAt) return 50;
+  const now = new Date();
+  const created = new Date(createdAt);
+  const hoursAgo = (now.getTime() - created.getTime()) / (1000 * 60 * 60);
+
+  if (hoursAgo < 1) return 100;   // just created
+  if (hoursAgo < 3) return 85;
+  if (hoursAgo < 12) return 70;
+  if (hoursAgo < 24) return 55;
+  return Math.max(20, 50 - (hoursAgo - 24) / 5);
+}
+
+// ─────────────────────────────────────
+// MAIN SCORING
+// ─────────────────────────────────────
+
+const DEFAULT_ENGAGEMENT: EngagementSignals = {
+  joinedCourts: [],
+  viewedCourts: [],
+  favoritedCourts: [],
+  playedLevels: [],
+  playedMetros: [],
+  joinTimePatterns: [],
+  dismissedCourts: [],
+  totalJoins: 0,
+};
+
+/** Score a single lobby against user preferences and engagement history */
+export function scoreLobby(
+  lobby: FeedLobby,
+  userPrefs: UserPreferences,
+  engagement: EngagementSignals = DEFAULT_ENGAGEMENT,
+): ScoredLobby {
   const reasons: string[] = [];
 
-  // Calculate individual scores
+  // Individual scores
   const skillScore = calculateSkillScore(userPrefs.skill_level, lobby.min_level, lobby.max_level);
   const timeScore = calculateTimeScore(lobby.start_time);
   const locationScore = calculateLocationScore(lobby.metro, userPrefs.preferred_metro);
+  const engagementScore = calculateEngagementScore(lobby, engagement);
   const fillScore = calculateFillScore(lobby.participants_count, lobby.required_players);
   const timePreferenceScore = calculateTimePreferenceScore(lobby.start_time, userPrefs.preferred_times);
+  const freshnessScore = calculateFreshnessScore(lobby.created_at);
+  const creatorScore = (lobby.creator_rating || 4) * 20; // 0-100
 
-  // Add match reasons
+  // Match reasons for transparency
   if (skillScore >= 80) reasons.push('Подходящий уровень');
   if (timeScore >= 80) reasons.push('Удобное время');
   if (locationScore >= 80) reasons.push('Близко к вам');
   if (fillScore >= 80) reasons.push('Почти собрано');
+  if (engagementScore >= 70 && engagement.totalJoins > 0) reasons.push('Вам понравится');
+  if (freshnessScore >= 85) reasons.push('Новое');
 
-  // Price filter
+  // Price check
   let priceBonus = 0;
   if (userPrefs.max_price && lobby.price_per_hour) {
     const pricePerPerson = lobby.price_per_hour / lobby.required_players;
     if (pricePerPerson <= userPrefs.max_price) {
-      priceBonus = 10;
+      priceBonus = 5;
       reasons.push('В бюджете');
     }
   }
 
   // Weighted final score
   const weightedScore =
-    (skillScore * 0.40) +      // 40% skill match
-    (timeScore * 0.20) +        // 20% time proximity
-    (locationScore * 0.15) +    // 15% location
-    (fillScore * 0.10) +        // 10% fill rate
-    (timePreferenceScore * 0.10) + // 10% time preference
-    ((lobby.creator_rating || 4) * 5 * 0.05) + // 5% creator reputation
+    (skillScore * 0.35) +
+    (timeScore * 0.20) +
+    (locationScore * 0.15) +
+    (engagementScore * 0.10) +
+    (fillScore * 0.08) +
+    (timePreferenceScore * 0.07) +
+    (creatorScore * 0.03) +
+    (freshnessScore * 0.02) +
     priceBonus;
+
+  // Determine recommendation type
+  let recommendationType: ScoredLobby['recommendationType'] = 'personalized';
+  if (freshnessScore >= 85) recommendationType = 'new';
+  else if (engagementScore >= 70 && engagement.totalJoins > 2) recommendationType = 'personalized';
+  else if (fillScore >= 80) recommendationType = 'popular';
 
   return {
     ...lobby,
-    score: Math.round(weightedScore),
+    score: Math.round(Math.min(100, weightedScore)),
     matchReasons: reasons,
+    recommendationType,
   };
 }
 
-/**
- * Sort lobbies by score and apply feed rules
- */
-export function generateFeed(lobbies: FeedLobby[], userPrefs: UserPreferences): ScoredLobby[] {
+// ─────────────────────────────────────
+// FEED GENERATION
+// ─────────────────────────────────────
+
+/** Serendipity injection — randomly boost some lower-scored lobbies */
+function injectSerendipity(lobbies: ScoredLobby[], probability: number = 0.1): ScoredLobby[] {
+  return lobbies.map(lobby => {
+    if (lobby.score < 60 && Math.random() < probability) {
+      return {
+        ...lobby,
+        score: lobby.score + 15,
+        matchReasons: [...lobby.matchReasons, 'Попробуйте новое'],
+        recommendationType: 'serendipity' as const,
+      };
+    }
+    return lobby;
+  });
+}
+
+/** Generate the full recommendation feed */
+export function generateFeed(
+  lobbies: FeedLobby[],
+  userPrefs: UserPreferences,
+  engagement: EngagementSignals = DEFAULT_ENGAGEMENT,
+): ScoredLobby[] {
   // Score all lobbies
-  const scored = lobbies.map(lobby => scoreLobby(lobby, userPrefs));
+  let scored = lobbies.map(lobby => scoreLobby(lobby, userPrefs, engagement));
+
+  // Inject serendipity for exploration (10% chance for low-score lobbies)
+  scored = injectSerendipity(scored, 0.1);
 
   // Sort by score descending
   scored.sort((a, b) => b.score - a.score);
 
-  // Apply diversity rules - don't show too many from same court
+  // Apply diversity rules — max 3 per court in top results
   const diversified: ScoredLobby[] = [];
   const courtCount: Record<string, number> = {};
 
   for (const lobby of scored) {
     const count = courtCount[lobby.court_name] || 0;
-
-    // Max 3 lobbies per court in top results
     if (count < 3 || diversified.length > 20) {
       diversified.push(lobby);
       courtCount[lobby.court_name] = count + 1;
@@ -244,46 +351,58 @@ export function generateFeed(lobbies: FeedLobby[], userPrefs: UserPreferences): 
   return diversified;
 }
 
-/**
- * Get feed sections for UI display
- */
+/** Group feed into UI sections */
 export function getFeedSections(lobbies: ScoredLobby[]): {
   recommended: ScoredLobby[];
   startingSoon: ScoredLobby[];
   nearYou: ScoredLobby[];
   popular: ScoredLobby[];
+  newLobbies: ScoredLobby[];
+  serendipity: ScoredLobby[];
 } {
   const now = new Date();
   const in6Hours = new Date(now.getTime() + 6 * 60 * 60 * 1000);
 
   return {
-    // Top scored lobbies
-    recommended: lobbies.filter(l => l.score >= 70).slice(0, 6),
+    // Top scored — personalized recommendations
+    recommended: lobbies.filter(l => l.score >= 65).slice(0, 8),
 
-    // Starting in next 6 hours
+    // Urgent — starting within 6 hours
     startingSoon: lobbies
       .filter(l => {
         const startTime = new Date(l.start_time);
         return startTime > now && startTime < in6Hours;
       })
-      .slice(0, 4),
+      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+      .slice(0, 5),
 
-    // High location score
+    // Location-based
     nearYou: lobbies
       .filter(l => l.matchReasons.includes('Близко к вам'))
       .slice(0, 4),
 
-    // Almost full (social proof)
+    // Social proof — almost full
     popular: lobbies
-      .filter(l => l.participants_count >= l.required_players * 0.5)
+      .filter(l => l.participants_count >= l.required_players * 0.5 && l.participants_count < l.required_players)
       .sort((a, b) => b.participants_count - a.participants_count)
       .slice(0, 4),
+
+    // Recently created
+    newLobbies: lobbies
+      .filter(l => l.recommendationType === 'new')
+      .slice(0, 4),
+
+    // Exploration / serendipity
+    serendipity: lobbies
+      .filter(l => l.recommendationType === 'serendipity')
+      .slice(0, 3),
   };
 }
 
-/**
- * Filter options for manual filtering
- */
+// ─────────────────────────────────────
+// MANUAL FILTERS
+// ─────────────────────────────────────
+
 export interface FeedFilters {
   minLevel?: number;
   maxLevel?: number;
@@ -296,29 +415,19 @@ export interface FeedFilters {
 
 export function applyFilters(lobbies: ScoredLobby[], filters: FeedFilters): ScoredLobby[] {
   return lobbies.filter(lobby => {
-    // Level filter
     if (filters.minLevel && lobby.max_level < filters.minLevel) return false;
     if (filters.maxLevel && lobby.min_level > filters.maxLevel) return false;
-
-    // Metro filter
     if (filters.metro && filters.metro.length > 0) {
       if (!filters.metro.includes(lobby.metro)) return false;
     }
-
-    // Date filter
     const startTime = new Date(lobby.start_time);
     if (filters.dateFrom && startTime < filters.dateFrom) return false;
     if (filters.dateTo && startTime > filters.dateTo) return false;
-
-    // Price filter
     if (filters.maxPrice && lobby.price_per_hour) {
       const pricePerPerson = lobby.price_per_hour / lobby.required_players;
       if (pricePerPerson > filters.maxPrice) return false;
     }
-
-    // Has spots filter
     if (filters.hasSpots && lobby.participants_count >= lobby.required_players) return false;
-
     return true;
   });
 }

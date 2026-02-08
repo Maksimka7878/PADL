@@ -12,31 +12,35 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log error to analytics/monitoring service
     console.error("Application error:", error);
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-      <div className="text-center space-y-6 max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-[30%] left-[20%] w-[400px] h-[400px] bg-hot-pink/8 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="text-center space-y-8 max-w-md animate-slide-up">
         {/* Error Icon */}
-        <div className="w-20 h-20 mx-auto bg-red-500/10 rounded-full flex items-center justify-center">
-          <AlertTriangle className="h-10 w-10 text-red-500" />
+        <div className="w-20 h-20 mx-auto bg-hot-pink/10 rounded-2xl flex items-center justify-center border border-hot-pink/20">
+          <AlertTriangle className="h-10 w-10 text-hot-pink" />
         </div>
 
         {/* Message */}
-        <div className="space-y-2">
-          <h1 className="text-2xl font-black">Что-то пошло не так</h1>
-          <p className="text-zinc-400">
+        <div className="space-y-3">
+          <h1 className="font-display text-2xl font-black">Что-то пошло не так</h1>
+          <p className="text-white/35">
             Произошла ошибка при загрузке страницы. Попробуйте обновить страницу или вернуться позже.
           </p>
         </div>
 
-        {/* Error digest for support */}
+        {/* Error digest */}
         {error.digest && (
-          <div className="bg-zinc-900 rounded-lg p-3">
-            <p className="text-xs text-zinc-500">Код ошибки:</p>
-            <code className="text-xs text-zinc-400 font-mono">{error.digest}</code>
+          <div className="glass rounded-xl p-3">
+            <p className="text-[11px] text-white/25 uppercase tracking-wider">Код ошибки:</p>
+            <code className="text-xs text-white/40 font-mono">{error.digest}</code>
           </div>
         )}
 
@@ -44,14 +48,13 @@ export default function Error({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button
             onClick={reset}
-            className="bg-emerald-500 hover:bg-emerald-600 text-black font-bold"
+            className="font-display font-bold"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Попробовать снова
           </Button>
           <Button
             variant="outline"
-            className="border-zinc-700"
             onClick={() => (window.location.href = "/")}
           >
             <Home className="h-4 w-4 mr-2" />
@@ -60,12 +63,12 @@ export default function Error({
         </div>
 
         {/* Help */}
-        <div className="pt-6 border-t border-zinc-800">
-          <p className="text-sm text-zinc-500">
+        <div className="pt-6 border-t border-white/[0.06]">
+          <p className="text-sm text-white/25">
             Если проблема повторяется, напишите нам в{" "}
             <a
               href="https://t.me/padelmoscow"
-              className="text-emerald-400 hover:underline"
+              className="text-lime hover:text-lime-dark transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >

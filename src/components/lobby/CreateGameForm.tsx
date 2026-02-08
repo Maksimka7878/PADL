@@ -68,29 +68,29 @@ export function CreateGameForm({ courts, onSubmit, isLoading }: CreateGameFormPr
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 bg-zinc-900 border border-zinc-800 p-8 rounded-2xl"
+        className="space-y-6 glass gradient-border p-8 rounded-2xl"
       >
         <FormField
           control={form.control}
           name="court_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-zinc-400 flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
+              <FormLabel className="text-white/40 text-xs tracking-wider flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-violet" />
                 Выберите корт в Москве
               </FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
-                  <SelectTrigger className="bg-zinc-950 border-zinc-800">
+                  <SelectTrigger className="bg-white/[0.04] border-white/10 rounded-xl">
                     <SelectValue placeholder="Выберите корт..." />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="bg-zinc-950 border-zinc-800">
+                <SelectContent className="bg-surface-2 border-white/10 rounded-xl">
                   {courts.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       <div className="flex flex-col">
                         <span>{c.name}</span>
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-white/30">
                           м. {c.metro_station} • {c.price_per_hour}₽/час
                         </span>
                       </div>
@@ -108,14 +108,13 @@ export function CreateGameForm({ courts, onSubmit, isLoading }: CreateGameFormPr
           name="start_time"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-zinc-400 flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+              <FormLabel className="text-white/40 text-xs tracking-wider flex items-center gap-2">
+                <Calendar className="h-3.5 w-3.5 text-hot-pink" />
                 Дата и время игры
               </FormLabel>
               <FormControl>
                 <Input
                   type="datetime-local"
-                  className="bg-zinc-950 border-zinc-800"
                   {...field}
                 />
               </FormControl>
@@ -125,9 +124,9 @@ export function CreateGameForm({ courts, onSubmit, isLoading }: CreateGameFormPr
         />
 
         <div className="space-y-4">
-          <FormLabel className="text-zinc-400">Диапазон уровней (NTRP)</FormLabel>
+          <FormLabel className="text-white/40 text-xs tracking-wider">Диапазон уровней (NTRP)</FormLabel>
           <div className="flex gap-4 items-center">
-            <div className="w-12 text-center text-emerald-500 font-black text-xl">
+            <div className="w-12 text-center font-display text-lime font-black text-xl">
               {minLevel.toFixed(1)}
             </div>
             <Slider
@@ -141,11 +140,11 @@ export function CreateGameForm({ courts, onSubmit, isLoading }: CreateGameFormPr
               }}
               className="flex-1"
             />
-            <div className="w-12 text-center text-emerald-500 font-black text-xl">
+            <div className="w-12 text-center font-display text-lime font-black text-xl">
               {maxLevel.toFixed(1)}
             </div>
           </div>
-          <div className="flex justify-between text-xs text-zinc-500">
+          <div className="flex justify-between text-[10px] text-white/20 uppercase tracking-[0.1em]">
             <span>Beginner</span>
             <span>Intermediate</span>
             <span>Advanced</span>
@@ -158,11 +157,10 @@ export function CreateGameForm({ courts, onSubmit, isLoading }: CreateGameFormPr
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-zinc-400">Описание (опционально)</FormLabel>
+              <FormLabel className="text-white/40 text-xs tracking-wider">Описание (опционально)</FormLabel>
               <FormControl>
                 <Input
                   placeholder="Напишите что-нибудь о игре..."
-                  className="bg-zinc-950 border-zinc-800"
                   {...field}
                 />
               </FormControl>
@@ -174,9 +172,10 @@ export function CreateGameForm({ courts, onSubmit, isLoading }: CreateGameFormPr
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-black py-6 text-lg"
+          className="w-full py-6 text-lg font-display font-black"
+          variant="violet"
         >
-          {isLoading ? "СОЗДАНИЕ..." : "СОЗДАТЬ ЛОББИ"}
+          {isLoading ? "Создание..." : "Создать лобби"}
         </Button>
       </form>
     </Form>

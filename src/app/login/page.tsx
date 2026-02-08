@@ -32,16 +32,22 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-zinc-900 to-zinc-950">
-      <Card className="w-full max-w-md bg-zinc-900 border-zinc-800">
-        <CardHeader className="text-center">
-          <Link href="/" className="inline-block mb-4">
-            <div className="w-16 h-16 mx-auto bg-emerald-500 rounded-2xl flex items-center justify-center">
+    <main className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-violet/8 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-lime/5 rounded-full blur-[100px]" />
+      </div>
+
+      <Card className="w-full max-w-md glass gradient-border animate-slide-up">
+        <CardHeader className="text-center pb-2">
+          <Link href="/" className="inline-block mb-6">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-lime to-cyan flex items-center justify-center shadow-lg glow-lime">
               <span className="text-2xl">🎾</span>
             </div>
           </Link>
-          <CardTitle className="text-2xl font-black">Вход в аккаунт</CardTitle>
-          <CardDescription className="text-zinc-500">
+          <CardTitle className="font-display text-2xl font-black">Вход в аккаунт</CardTitle>
+          <CardDescription className="text-white/30">
             Войдите, чтобы найти партнёров для игры
           </CardDescription>
         </CardHeader>
@@ -49,7 +55,7 @@ export default function LoginPage() {
           {/* Google Login */}
           <Button
             variant="outline"
-            className="w-full h-12 border-zinc-700 hover:bg-zinc-800"
+            className="w-full h-12"
             onClick={handleGoogleLogin}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -75,17 +81,17 @@ export default function LoginPage() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-zinc-800" />
+              <span className="w-full border-t border-white/[0.06]" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-zinc-900 px-2 text-zinc-500">или</span>
+              <span className="bg-surface px-3 text-white/25 tracking-widest">или</span>
             </div>
           </div>
 
           {/* Email/Password Login */}
           <form onSubmit={handleCredentialsLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-zinc-400">
+              <Label htmlFor="email" className="text-white/40 text-xs tracking-wider">
                 Email
               </Label>
               <Input
@@ -98,7 +104,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-zinc-400">
+              <Label htmlFor="password" className="text-white/40 text-xs tracking-wider">
                 Пароль
               </Label>
               <Input
@@ -113,15 +119,15 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-black font-bold"
+              className="w-full h-12 font-display font-bold"
             >
               {isLoading ? "Вход..." : "Войти"}
             </Button>
           </form>
 
-          <p className="text-center text-sm text-zinc-500">
+          <p className="text-center text-sm text-white/30">
             Нет аккаунта?{" "}
-            <Link href="/register" className="text-emerald-400 hover:underline">
+            <Link href="/register" className="text-lime hover:text-lime-dark transition-colors font-semibold">
               Создать
             </Link>
           </p>
