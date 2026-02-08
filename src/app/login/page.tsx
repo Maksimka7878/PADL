@@ -121,7 +121,7 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-zinc-500">
             Нет аккаунта?{" "}
-            <Link href="/login" className="text-emerald-400 hover:underline">
+            <Link href="/register" className="text-emerald-400 hover:underline">
               Создать
             </Link>
           </p>

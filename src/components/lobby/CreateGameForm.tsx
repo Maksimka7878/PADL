@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -61,8 +61,8 @@ export function CreateGameForm({ courts, onSubmit, isLoading }: CreateGameFormPr
     },
   });
 
-  const minLevel = form.watch("min_level");
-  const maxLevel = form.watch("max_level");
+  const minLevel = useWatch({ control: form.control, name: "min_level" });
+  const maxLevel = useWatch({ control: form.control, name: "max_level" });
 
   return (
     <Form {...form}>

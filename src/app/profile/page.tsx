@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,9 +63,11 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center">
                 {session?.user?.image ? (
-                  <img
+                  <Image
                     src={session.user.image}
                     alt="Avatar"
+                    width={80}
+                    height={80}
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (

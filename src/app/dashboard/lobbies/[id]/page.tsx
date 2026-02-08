@@ -5,8 +5,10 @@ import { LevelBadge } from "@/components/lobby/LevelBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Calendar, Users, MessageCircle } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, MapPin, Calendar, Users } from "lucide-react";
 import { joinLobby, leaveLobby } from "@/lib/actions";
+import { LobbyChatButton } from "@/components/lobby/LobbyChatButton";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -212,7 +214,7 @@ export default async function LobbyDetailPage({ params }: PageProps) {
                 >
                   <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
                     {p.image ? (
-                      <img src={p.image} alt="" className="w-full h-full rounded-full" />
+                      <Image src={p.image} alt="" width={40} height={40} className="w-full h-full rounded-full" />
                     ) : (
                       <span className="text-lg">👤</span>
                     )}
@@ -272,16 +274,16 @@ export default async function LobbyDetailPage({ params }: PageProps) {
                 {isFull
                   ? "Лобби заполнено"
                   : isLevelCompatible
-                  ? "Присоединиться"
-                  : "Ваш уровень не подходит"}
+                    ? "Присоединиться"
+                    : "Ваш уровень не подходит"}
               </Button>
             </form>
           )}
 
-          <Button variant="outline" className="w-full h-12 border-zinc-700">
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Открыть чат
-          </Button>
+          <LobbyChatButton
+            lobbyId={id}
+            currentUserName={session.user?.name || undefined}
+          />
         </div>
       </main>
     </div>
